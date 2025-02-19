@@ -29,17 +29,132 @@ Sub Class_Globals
 	Private PrefDialog1 As PreferencesDialog
 	Private PrefDialog2 As PreferencesDialog
 	Private PrefDialog3 As PreferencesDialog
-	Dim Viewing As String
-	Dim CategoryId As Int
-	Dim Category() As Category
-	Dim const COLOR_RED As Int = -65536			'ignore
-	Dim const COLOR_BLUE As Int = -16776961		'ignore
-	Dim const COLOR_MAGENTA As Int = -65281		'ignore
+	Private Viewing As String
+	Private CategoryId As Int
+	Private Category() As Category
+	Private Const COLOR_RED As Int = -65536
+	Private Const COLOR_BLUE As Int = -16776961
+	Private Const COLOR_MAGENTA As Int = -65281
+	Private Const COLOR_ADD As Int = -13447886
+	Private Const COLOR_EDIT As Int = -12490271
+	Private Const COLOR_DELETE As Int = -2354116
+	Private Const COLOR_OVERLAY As Int = -2147481048
+	Private Const COLOR_TRANSPARENT As Int = 0
 	Type Category (Id As Int, Name As String)
 End Sub
 
 Public Sub Initialize
 '	B4XPages.GetManager.LogEvents = True
+End Sub
+
+Private Sub B4XPage_Created (Root1 As B4XView)
+	Root = Root1
+	Root.LoadLayout("MainPage")
+	B4XPages.SetTitle(Me, "MiniORM")
+	ConfigureDatabase
+End Sub
+
+Private Sub B4XPage_CloseRequest As ResumableSub
+	If xui.IsB4A Then
+		'back key in Android
+		If PrefDialog1.BackKeyPressed Then Return False
+		If PrefDialog2.BackKeyPressed Then Return False
+		If PrefDialog3.BackKeyPressed Then Return False
+	End If
+	If Viewing = "Product" Then
+		GetCategories
+		Return False
+	End If
+	DBClose
+	Return True
+End Sub
+
+Private Sub B4XPage_Appear
+	'GetCategories
+End Sub
+
+Private Sub B4XPage_Resize(Width As Int, Height As Int)
+	If PrefDialog1.IsInitialized And PrefDialog1.Dialog.Visible Then PrefDialog1.Dialog.Resize(Width, Height)
+	If PrefDialog2.IsInitialized And PrefDialog2.Dialog.Visible Then PrefDialog2.Dialog.Resize(Width, Height)
+	If PrefDialog3.IsInitialized And PrefDialog3.Dialog.Visible Then PrefDialog3.Dialog.Resize(Width, Height)
+End Sub
+
+'Don't miss the code in the Main module + manifest editor.
+Private Sub IME_HeightChanged (NewHeight As Int, OldHeight As Int)
+	PrefDialog1.KeyboardHeightChanged(NewHeight)
+	PrefDialog2.KeyboardHeightChanged(NewHeight)
+	PrefDialog3.KeyboardHeightChanged(NewHeight)
+End Sub
+
+#If B4J
+Private Sub lblBack_MouseClicked (EventData As MouseEvent)
+	GetCategories
+End Sub
+#Else
+Private Sub lblBack_Click
+	GetCategories
+End Sub
+#End If
+
+Private Sub clvRecord_ItemClick (Index As Int, Value As Object)
+	If Viewing = "Category" Then
+		CategoryId = Value
+		GetProducts
+	End If
+End Sub
+
+Private Sub btnNew_Click
+	If Viewing = "Product" Then
+		Dim ProductMap As Map = CreateMap("Product Code": "", "Category": GetCategoryName(CategoryId), "Product Name": "", "Product Price": "", "id": 0)
+		ShowDialog2("Add", ProductMap)
+	Else
+		Dim CategoryMap As Map = CreateMap("Category Name": "", "id": 0)
+		ShowDialog1("Add", CategoryMap)
+	End If
+End Sub
+
+Private Sub btnEdit_Click
+	Dim Index As Int = clvRecord.GetItemFromView(Sender)
+	Dim lst As B4XView = clvRecord.GetPanel(Index)
+	If Viewing = "Product" Then
+		If CategoryId = 0 Then Return
+		Dim ProductId As Int = clvRecord.GetValue(Index)
+		Dim pnl As B4XView = lst.GetView(0)
+		Dim v1 As B4XView = pnl.GetView(0)
+		#If B4i
+		Dim v2 As B4XView = pnl.GetView(1).GetView(0) ' using panel
+		#Else
+		Dim v2 As B4XView = pnl.GetView(1)
+		#End If
+		Dim v3 As B4XView = pnl.GetView(2)
+		Dim v4 As B4XView = pnl.GetView(3)
+		Dim ProductMap As Map = CreateMap("Product Code": v1.Text, "Category": v2.Text, "Product Name": v3.Text, "Product Price": v4.Text.Replace(",", ""), "id": ProductId)
+		ShowDialog2("Edit", ProductMap)
+	Else
+		CategoryId = clvRecord.GetValue(Index)
+		Dim pnl As B4XView = lst.GetView(0)
+		Dim v1 As B4XView = pnl.GetView(0)
+		Dim CategoryMap As Map = CreateMap("Category Name": v1.Text, "id": CategoryId)
+		ShowDialog1("Edit", CategoryMap)
+	End If
+End Sub
+
+Private Sub btnDelete_Click
+	Dim Index As Int = clvRecord.GetItemFromView(Sender)
+	Dim Id As Int = clvRecord.GetValue(Index)
+	Dim lst As B4XView = clvRecord.GetPanel(Index)
+	Dim pnl As B4XView = lst.GetView(0)
+	If Viewing = "Product" Then
+		If CategoryId = 0 Then Return
+		Dim v1 As B4XView = pnl.GetView(2)
+	Else
+		CategoryId = clvRecord.GetValue(Index)
+		Dim v1 As B4XView = pnl.GetView(0)
+	End If
+	Dim M1 As Map
+	M1.Initialize
+	M1.Put("Item", v1.Text)
+	ShowDialog3(M1, Id)
 End Sub
 
 Private Sub DBEngine As String
@@ -145,55 +260,6 @@ Private Sub CreateDatabase
 	GetCategories
 End Sub
 
-Private Sub B4XPage_Created (Root1 As B4XView)
-	Root = Root1
-	Root.LoadLayout("MainPage")
-	B4XPages.SetTitle(Me, "MiniORM")
-	ConfigureDatabase
-End Sub
-
-Private Sub B4XPage_CloseRequest As ResumableSub
-	If xui.IsB4A Then
-		'back key in Android
-		If PrefDialog1.BackKeyPressed Then Return False
-		If PrefDialog2.BackKeyPressed Then Return False
-		If PrefDialog3.BackKeyPressed Then Return False
-	End If
-	If Viewing = "Product" Then
-		GetCategories
-		Return False
-	End If
-	DBClose
-	Return True
-End Sub
-
-'Don't miss the code in the Main module + manifest editor.
-Private Sub IME_HeightChanged (NewHeight As Int, OldHeight As Int)
-	PrefDialog1.KeyboardHeightChanged(NewHeight)
-	PrefDialog2.KeyboardHeightChanged(NewHeight)
-	PrefDialog3.KeyboardHeightChanged(NewHeight)
-End Sub
-
-Private Sub B4XPage_Appear
-	'GetCategories
-End Sub
-
-Private Sub B4XPage_Resize(Width As Int, Height As Int)
-	If PrefDialog1.IsInitialized And PrefDialog1.Dialog.Visible Then PrefDialog1.Dialog.Resize(Width, Height)
-	If PrefDialog2.IsInitialized And PrefDialog2.Dialog.Visible Then PrefDialog2.Dialog.Resize(Width, Height)
-	If PrefDialog3.IsInitialized And PrefDialog3.Dialog.Visible Then PrefDialog3.Dialog.Resize(Width, Height)
-End Sub
-
-#If B4J
-Private Sub lblBack_MouseClicked (EventData As MouseEvent)
-	GetCategories
-End Sub
-#Else
-Private Sub lblBack_Click
-	GetCategories
-End Sub
-#End If
-
 Private Sub GetCategories
 	Try
 		Dim i As Int
@@ -238,16 +304,6 @@ Private Sub GetProducts
 	lblBack.Visible = True
 End Sub
 
-Private Sub GetCategoryName (Id As Int) As String
-	Dim i As Int
-	For i = 0 To Category.Length - 1
-		If Category(i).Id = Id Then
-			Return Category(i).Name
-		End If
-	Next
-	Return ""
-End Sub
-
 Private Sub GetCategoryId (Name As String) As Int
 	Dim i As Int
 	For i = 0 To Category.Length - 1
@@ -258,21 +314,14 @@ Private Sub GetCategoryId (Name As String) As Int
 	Return 0
 End Sub
 
-Private Sub clvRecord_ItemClick (Index As Int, Value As Object)
-	If Viewing = "Category" Then
-		CategoryId = Value
-		GetProducts
-	End If
-End Sub
-
-Private Sub btnNew_Click
-	If Viewing = "Product" Then
-		Dim ProductMap As Map = CreateMap("Product Code": "", "Category": GetCategoryName(CategoryId), "Product Name": "", "Product Price": "", "id": 0)
-		ShowDialog2("Add", ProductMap)
-	Else
-		Dim CategoryMap As Map = CreateMap("Category Name": "", "id": 0)
-		ShowDialog1("Add", CategoryMap)
-	End If
+Private Sub GetCategoryName (Id As Int) As String
+	Dim i As Int
+	For i = 0 To Category.Length - 1
+		If Category(i).Id = Id Then
+			Return Category(i).Name
+		End If
+	Next
+	Return ""
 End Sub
 
 Private Sub CreateCategoryItems (Name As String, Width As Double) As B4XView
@@ -296,9 +345,10 @@ End Sub
 
 Private Sub CreateDialog1
 	PrefDialog1.Initialize(Root, "Category", 300dip, 70dip)
-	PrefDialog1.Dialog.OverlayColor = xui.Color_ARGB(128, 0, 10, 40)
+	PrefDialog1.Dialog.OverlayColor = COLOR_OVERLAY
 	PrefDialog1.Dialog.TitleBarHeight = 50dip
 	PrefDialog1.LoadFromJson(File.ReadString(File.DirAssets, "template_category.json"))
+	PrefDialog1.SetEventsListener(Me, "PrefDialog1") '<-- must add to handle events
 End Sub
 
 Private Sub CreateDialog2
@@ -308,42 +358,65 @@ Private Sub CreateDialog2
 		categories.Add(Category(i).Name)
 	Next
 	PrefDialog2.Initialize(Root, "Product", 300dip, 250dip)
-	PrefDialog2.Dialog.OverlayColor = xui.Color_ARGB(128, 0, 10, 40)
+	PrefDialog2.Dialog.OverlayColor = COLOR_OVERLAY
 	PrefDialog2.Dialog.TitleBarHeight = 50dip
 	PrefDialog2.LoadFromJson(File.ReadString(File.DirAssets, "template_product.json"))
 	PrefDialog2.SetOptions("Category", categories)
-	PrefDialog2.SetEventsListener(Me, "PrefDialog2") '<-- must add to handle events.
+	PrefDialog2.SetEventsListener(Me, "PrefDialog2") '<-- must add to handle events
 End Sub
 
 Private Sub CreateDialog3
 	PrefDialog3.Initialize(Root, "Delete", 300dip, 70dip)
 	PrefDialog3.Theme = PrefDialog3.THEME_LIGHT
-	PrefDialog3.Dialog.OverlayColor = xui.Color_ARGB(128, 0, 10, 40)
+	PrefDialog3.Dialog.OverlayColor = COLOR_OVERLAY
 	PrefDialog3.Dialog.TitleBarHeight = 50dip
-	PrefDialog3.Dialog.TitleBarColor = xui.Color_RGB(220, 20, 60)
+	PrefDialog3.Dialog.TitleBarColor = COLOR_DELETE
 	PrefDialog3.AddSeparator("default")
+	PrefDialog3.SetEventsListener(Me, "PrefDialog3") '<-- must add to handle events
+End Sub
+
+Private Sub PrefDialog1_BeforeDialogDisplayed (Template As Object)
+	AdjustDialogText(PrefDialog1)
+End Sub
+
+Private Sub PrefDialog2_BeforeDialogDisplayed (Template As Object)
+	AdjustDialogText(PrefDialog2)
+End Sub
+
+Private Sub PrefDialog3_BeforeDialogDisplayed (Template As Object)
+	AdjustDialogText(PrefDialog3)
+End Sub
+
+Private Sub AdjustDialogText (Pref As PreferencesDialog)
+	Try
+		Dim btnCancel As B4XView = Pref.Dialog.GetButton(xui.DialogResponse_Cancel)
+		btnCancel.Width = btnCancel.Width + 20dip
+		btnCancel.Left = btnCancel.Left - 20dip
+		btnCancel.TextColor = COLOR_RED
+		Dim btnOk As B4XView = Pref.Dialog.GetButton(xui.DialogResponse_Positive)
+		If btnOk.IsInitialized Then
+			btnOk.Width = btnOk.Width + 20dip
+			btnOk.Left = btnCancel.Left - btnOk.Width
+		End If
+	Catch
+		Log(LastException)
+	End Try
 End Sub
 
 Private Sub ShowDialog1 (Action As String, Item As Map)
 	If Action = "Add" Then
-		PrefDialog1.Dialog.TitleBarColor = xui.Color_RGB(50, 205, 50)
+		PrefDialog1.Dialog.TitleBarColor = COLOR_ADD
 	Else
-		PrefDialog1.Dialog.TitleBarColor = xui.Color_RGB(65, 105, 225)
+		PrefDialog1.Dialog.TitleBarColor = COLOR_EDIT
 	End If
 	PrefDialog1.Title = Action & " Category"
 	Dim sf As Object = PrefDialog1.ShowDialog(Item, "OK", "CANCEL")
-	#if B4A or B4i
+	#If B4A or B4i
 	PrefDialog1.Dialog.Base.Top = 100dip ' Make it lower
 	#Else
 	Sleep(0)
 	PrefDialog1.CustomListView1.sv.Height = PrefDialog1.CustomListView1.sv.ScrollViewInnerPanel.Height + 10dip
 	#End If
-	Dim btnCancel As B4XView = PrefDialog1.Dialog.GetButton(xui.DialogResponse_Cancel)
-	btnCancel.Width = btnCancel.Width + 20dip
-	btnCancel.Left = btnCancel.Left - 20dip
-	btnCancel.TextColor = xui.Color_Red
-	Dim btnOk As B4XView = PrefDialog1.Dialog.GetButton(xui.DialogResponse_Positive)
-	btnOk.Left = btnOk.Left - 20dip
 	Wait For (sf) Complete (Result As Int)
 	If Result = xui.DialogResponse_Positive Then
 		If 0 = Item.Get("id") Then ' New row
@@ -374,9 +447,9 @@ End Sub
 
 Private Sub ShowDialog2 (Action As String, Item As Map)
 	If Action = "Add" Then
-		PrefDialog2.Dialog.TitleBarColor = xui.Color_RGB(50, 205, 50)
+		PrefDialog2.Dialog.TitleBarColor = COLOR_ADD
 	Else
-		PrefDialog2.Dialog.TitleBarColor = xui.Color_RGB(65, 105, 225)
+		PrefDialog2.Dialog.TitleBarColor = COLOR_EDIT
 	End If
 	PrefDialog2.Title = Action & " Product"
 	Dim sf As Object = PrefDialog2.ShowDialog(Item, "OK", "CANCEL")
@@ -432,26 +505,20 @@ End Sub
 Private Sub ShowDialog3 (Item As Map, Id As Int)
 	PrefDialog3.Title = "Delete " & Viewing
 	Dim sf As Object = PrefDialog3.ShowDialog(Item, "OK", "CANCEL")
-	#if B4A or B4i
+	#If B4A or B4i
 	PrefDialog3.Dialog.Base.Top = 100dip ' Make it lower
 	#Else
 	Sleep(0)
 	PrefDialog3.CustomListView1.sv.Height = PrefDialog3.CustomListView1.sv.ScrollViewInnerPanel.Height + 10dip
 	#End If
-	Dim btnCancel As B4XView = PrefDialog3.Dialog.GetButton(xui.DialogResponse_Cancel)
-	btnCancel.Width = btnCancel.Width + 20dip
-	btnCancel.Left = btnCancel.Left - 20dip
-	btnCancel.TextColor = xui.Color_Red
-	Dim btnOk As B4XView = PrefDialog3.Dialog.GetButton(xui.DialogResponse_Positive)
-	btnOk.Left = btnOk.Left - 20dip
 	PrefDialog3.CustomListView1.GetPanel(0).GetView(0).Text = Item.Get("Item")
 	#If B4i
 	PrefDialog3.CustomListView1.GetPanel(0).GetView(0).TextSize = 16 ' Text too small in ios
 	#Else
 	PrefDialog3.CustomListView1.GetPanel(0).GetView(0).TextSize = 15 ' 14
 	#End If
-	PrefDialog3.CustomListView1.GetPanel(0).GetView(0).Color = xui.Color_Transparent
-	PrefDialog3.CustomListView1.sv.ScrollViewInnerPanel.Color = xui.Color_Transparent
+	PrefDialog3.CustomListView1.GetPanel(0).GetView(0).Color = COLOR_TRANSPARENT
+	PrefDialog3.CustomListView1.sv.ScrollViewInnerPanel.Color = COLOR_TRANSPARENT
 	Wait For (sf) Complete (Result As Int)
 	If Result = xui.DialogResponse_Positive Then
 		If Viewing = "Product" Then
@@ -476,65 +543,4 @@ Private Sub ShowDialog3 (Item As Map, Id As Int)
 	Else
 		GetCategories
 	End If
-End Sub
-
-Private Sub PrefDialog2_BeforeDialogDisplayed (Template As Object)
-	Try
-		' Fix Linux UI (Long Text Button)
-		Dim btnCancel As B4XView = PrefDialog2.Dialog.GetButton(xui.DialogResponse_Cancel)
-		btnCancel.Width = btnCancel.Width + 20dip
-		btnCancel.Left = btnCancel.Left - 20dip
-		btnCancel.TextColor = xui.Color_Red
-		Dim btnOk As B4XView = PrefDialog2.Dialog.GetButton(xui.DialogResponse_Positive)
-		If btnOk.IsInitialized Then
-			btnOk.Width = btnOk.Width + 20dip
-			btnOk.Left = btnCancel.Left - btnOk.Width
-		End If
-	Catch
-		Log(LastException)
-	End Try
-End Sub
-
-Private Sub btnEdit_Click
-	Dim Index As Int = clvRecord.GetItemFromView(Sender)
-	Dim lst As B4XView = clvRecord.GetPanel(Index)
-	If Viewing = "Product" Then
-		If CategoryId = 0 Then Return
-		Dim ProductId As Int = clvRecord.GetValue(Index)
-		Dim pnl As B4XView = lst.GetView(0)
-		Dim v1 As B4XView = pnl.GetView(0)
-		#If B4i
-		Dim v2 As B4XView = pnl.GetView(1).GetView(0) ' using panel
-		#Else
-		Dim v2 As B4XView = pnl.GetView(1)
-		#End If
-		Dim v3 As B4XView = pnl.GetView(2)
-		Dim v4 As B4XView = pnl.GetView(3)
-		Dim ProductMap As Map = CreateMap("Product Code": v1.Text, "Category": v2.Text, "Product Name": v3.Text, "Product Price": v4.Text.Replace(",", ""), "id": ProductId)
-		ShowDialog2("Edit", ProductMap)
-	Else
-		CategoryId = clvRecord.GetValue(Index)
-		Dim pnl As B4XView = lst.GetView(0)
-		Dim v1 As B4XView = pnl.GetView(0)
-		Dim CategoryMap As Map = CreateMap("Category Name": v1.Text, "id": CategoryId)
-		ShowDialog1("Edit", CategoryMap)
-	End If
-End Sub
-
-Private Sub btnDelete_Click
-	Dim Index As Int = clvRecord.GetItemFromView(Sender)
-	Dim Id As Int = clvRecord.GetValue(Index)
-	Dim lst As B4XView = clvRecord.GetPanel(Index)
-	Dim pnl As B4XView = lst.GetView(0)
-	If Viewing = "Product" Then
-		If CategoryId = 0 Then Return
-		Dim v1 As B4XView = pnl.GetView(2)
-	Else
-		CategoryId = clvRecord.GetValue(Index)
-		Dim v1 As B4XView = pnl.GetView(0)
-	End If
-	Dim M1 As Map
-	M1.Initialize
-	M1.Put("Item", v1.Text)
-	ShowDialog3(M1, Id)
 End Sub
