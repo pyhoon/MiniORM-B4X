@@ -24,7 +24,7 @@ Version=8.51
 'Code module
 #Region  Project Attributes 
 	#ApplicationLabel: MiniORM
-	#Version: 1.05
+	#Version: 1.06
 	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
 	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
 	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
