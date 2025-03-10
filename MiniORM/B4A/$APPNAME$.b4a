@@ -1,4 +1,4 @@
-﻿Build1=Default,b4a.miniorm
+﻿Build1=Default,b4a.miniorm,DBUTILS_NOLOGS
 File1=CategoryItem.bal
 File2=MainPage.bal
 File3=ProductItem.bal
@@ -26,8 +26,8 @@ Version=12.8
 @EndOfDesignText@
 #Region  Project Attributes 
 	#ApplicationLabel: MiniORM
-	#VersionCode: 1
-	#VersionName: 1.06
+	#VersionCode: 2
+	#VersionName: 2.00
 	'SupportedOrientations possible values: unspecified, landscape or portrait.
 	#SupportedOrientations: portrait
 	#CanInstallToExternalStorage: False

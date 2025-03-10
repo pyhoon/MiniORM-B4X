@@ -14,7 +14,7 @@ Sub Class_Globals
 	Private Root As B4XView
 	Private xui As XUI
 	Private DB As MiniORM
-	Private DBConnector As DatabaseConnector
+	Private Conn As ORMConnector
 	Private lblTitle As B4XView
 	Private lblBack As B4XView
 	Private clvRecord As CustomListView
@@ -158,19 +158,19 @@ Private Sub btnDelete_Click
 End Sub
 
 Private Sub DBEngine As String
-	Return DBConnector.DBEngine
+	Return Conn.DBEngine
 End Sub
 
 Private Sub DBOpen As SQL
-	Return DBConnector.DBOpen
+	Return Conn.DBOpen
 End Sub
 
 Private Sub DBClose
-	DBConnector.DBClose
+	Conn.DBClose
 End Sub
 
 Public Sub ConfigureDatabase
-	Dim con As Conn
+	Dim con As ConnectionInfo
 	con.Initialize
 	con.DBType = "SQLite"
 	con.DBFile = "MiniORM.db"
@@ -192,12 +192,15 @@ Public Sub ConfigureDatabase
 	#End If
 
 	Try
-		DBConnector.Initialize(con)
-		Dim DBFound As Boolean = DBConnector.DBExist
+		Conn.Initialize(con)
+		Dim DBFound As Boolean = Conn.DBExist
 		If DBFound Then
 			LogColor($"${con.DBType} database found!"$, COLOR_BLUE)
 			DB.Initialize(DBOpen, DBEngine)
-			'DB.ShowExtraLogs = True
+			DB.ShowExtraLogs = True
+			#If B4A or B4i
+			'DB.ShowDBUtilsJson = True
+			#End If
 			GetCategories
 		Else
 			LogColor($"${con.DBType} database not found!"$, COLOR_RED)
@@ -215,47 +218,49 @@ End Sub
 
 Private Sub CreateDatabase
 	LogColor("Creating database...", COLOR_MAGENTA)
-	Wait For (DBConnector.DBCreate) Complete (Success As Boolean)
+	#If B4A or B4i
+	Dim Success As Boolean = Conn.DBCreate
+	#Else
+	Wait For (Conn.DBCreate) Complete (Success As Boolean)
+	#End If
 	If Not(Success) Then
 		Log("Database creation failed!")
 		Return
 	End If
 	
-	Dim MDB As MiniORM
-	MDB.Initialize(DBOpen, DBEngine)
-	MDB.UseTimestamps = True
-	MDB.AddAfterCreate = True
-	MDB.AddAfterInsert = True
+	DB.Initialize(DBOpen, DBEngine)
+	DB.UseTimestamps = True
+	DB.QueryAddToBatch = True
 	
-	MDB.Table = "tbl_categories"
-	MDB.Columns.Add(MDB.CreateORMColumn2(CreateMap("Name": "category_name")))
-	MDB.Create
+	DB.Table = "tbl_categories"
+	DB.Columns.Add(DB.CreateColumn2(CreateMap("Name": "category_name")))
+	DB.Create
 	
-	MDB.Columns = Array("category_name")
-	MDB.Insert2(Array As String("Hardwares"))
-	MDB.Insert2(Array As String("Toys"))
+	DB.Columns = Array("category_name")
+	DB.Insert2(Array As String("Hardwares"))
+	DB.Insert2(Array As String("Toys"))
 
-	MDB.Table = "tbl_products"
-	MDB.Columns.Add(MDB.CreateORMColumn2(CreateMap("Name": "category_id", "Type": MDB.INTEGER)))
-	MDB.Columns.Add(MDB.CreateORMColumn2(CreateMap("Name": "product_code", "Size": 12)))
-	MDB.Columns.Add(MDB.CreateORMColumn2(CreateMap("Name": "product_name")))
-	MDB.Columns.Add(MDB.CreateORMColumn2(CreateMap("Name": "product_price", "Type": MDB.DECIMAL, "Size": "10,2", "Default": 0.0)))
-	MDB.Foreign("category_id", "id", "tbl_categories", "", "")
-	MDB.Create
+	DB.Table = "tbl_products"
+	DB.Columns.Add(DB.CreateColumn2(CreateMap("Name": "category_id", "Type": DB.INTEGER)))
+	DB.Columns.Add(DB.CreateColumn2(CreateMap("Name": "product_code", "Size": 12)))
+	DB.Columns.Add(DB.CreateColumn2(CreateMap("Name": "product_name")))
+	DB.Columns.Add(DB.CreateColumn2(CreateMap("Name": "product_price", "Type": DB.DECIMAL, "Size": "10,2", "Default": 0.0)))
+	DB.Foreign("category_id", "id", "tbl_categories", "", "")
+	DB.Create
 	
-	MDB.Columns = Array("category_id", "product_code", "product_name", "product_price")
-	MDB.Insert2(Array As String(2, "T001", "Teddy Bear", 99.9))
-	MDB.Insert2(Array As String(1, "H001", "Hammer", 15.75))
-	MDB.Insert2(Array As String(2, "T002", "Optimus Prime", 1000))
+	DB.Columns = Array("category_id", "product_code", "product_name", "product_price")
+	DB.Insert2(Array As String(2, "T001", "Teddy Bear", 99.9))
+	DB.Insert2(Array As String(1, "H001", "Hammer", 15.75))
+	DB.Insert2(Array As String(2, "T002", "Optimus Prime", 1000))
 	
-	Wait For (MDB.ExecuteBatch) Complete (Success As Boolean)
+	Wait For (DB.ExecuteBatch) Complete (Success As Boolean)
 	If Success Then
 		LogColor("Database is created successfully!", COLOR_BLUE)
 	Else
 		LogColor("Database creation failed!", COLOR_RED)
 		Log(LastException)
 	End If
-	MDB.Close
+	DB.Close
 	DB.Initialize(DBOpen, DBEngine)
 	GetCategories
 End Sub
@@ -291,8 +296,8 @@ Private Sub GetProducts
 	clvRecord.Clear
 	DB.Table = "tbl_products p"
 	DB.Select = Array("p.*", "c.category_name")
-	DB.Join = DB.CreateORMJoin("tbl_categories c", "p.category_id = c.id", "")
-	DB.WhereValue(Array("c.id = ?"), Array As String(CategoryId))
+	DB.Join = DB.CreateJoin("tbl_categories c", "p.category_id = c.id", "")
+	DB.WhereParams(Array("c.id = ?"), Array As String(CategoryId))
 	DB.Query
 	Dim Items As List = DB.Results
 	For Each Item As Map In Items
@@ -421,7 +426,7 @@ Private Sub ShowDialog1 (Action As String, Item As Map)
 	If Result = xui.DialogResponse_Positive Then
 		If 0 = Item.Get("id") Then ' New row
 			DB.Table = "tbl_categories"
-			DB.WhereValue(Array("category_name = ?"), Array As String(Item.Get("Category Name")))
+			DB.WhereParam("category_name = ?", Item.Get("Category Name"))
 			DB.Query
 			If DB.Found Then
 				xui.MsgboxAsync("Category already exist", "Error")
@@ -459,7 +464,7 @@ Private Sub ShowDialog2 (Action As String, Item As Map)
 	If Result = xui.DialogResponse_Positive Then
 		If 0 = Item.Get("id") Then ' New row
 			DB.Table = "tbl_products"
-			DB.setWhereValue(Array("product_code = ?"), Array As String(Item.Get("Product Code")))
+			DB.WhereParam("product_code = ?", Item.Get("Product Code"))
 			DB.Query
 			If DB.Found Then
 				xui.MsgboxAsync("Product Code already exist", "Error")
@@ -477,7 +482,7 @@ Private Sub ShowDialog2 (Action As String, Item As Map)
 			xui.MsgboxAsync("New product created!", $"ID: ${DB.First.Get("id")}"$)
 		Else
 			DB.Table = "tbl_products"
-			DB.setWhereValue(Array("product_code = ?", "id <> ?"), Array As String(Item.Get("Product Code"), Item.Get("id")))
+			DB.WhereParams(Array("product_code = ?", "id <> ?"), Array As String(Item.Get("Product Code"), Item.Get("id")))
 			DB.Query
 			If DB.Found Then
 				xui.MsgboxAsync("Product Code already exist", "Error")

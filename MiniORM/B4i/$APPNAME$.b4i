@@ -1,4 +1,4 @@
-﻿Build1=Default,b4i.miniorm
+﻿Build1=Default,b4i.miniorm,DBUTILS_NOLOGS
 File1=CategoryItem.bil
 File2=MainPage.bil
 File3=ProductItem.bil
@@ -24,7 +24,7 @@ Version=8.51
 'Code module
 #Region  Project Attributes 
 	#ApplicationLabel: MiniORM
-	#Version: 1.06
+	#Version: 2.00
 	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
 	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
 	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
