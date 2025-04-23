@@ -157,8 +157,8 @@ Private Sub btnDelete_Click
 	ShowDialog3(M1, Id)
 End Sub
 
-Private Sub DBEngine As String
-	Return Conn.DBEngine
+Private Sub DBType As String
+	Return Conn.DBType
 End Sub
 
 Private Sub DBOpen As SQL
@@ -196,8 +196,8 @@ Public Sub ConfigureDatabase
 		Dim DBFound As Boolean = Conn.DBExist
 		If DBFound Then
 			LogColor($"${con.DBType} database found!"$, COLOR_BLUE)
-			DB.Initialize(DBOpen, DBEngine)
-			DB.ShowExtraLogs = True
+			DB.Initialize(DBType, DBOpen)
+			'DB.ShowExtraLogs = True
 			#If B4A or B4i
 			'DB.ShowDBUtilsJson = True
 			#End If
@@ -228,7 +228,7 @@ Private Sub CreateDatabase
 		Return
 	End If
 	
-	DB.Initialize(DBOpen, DBEngine)
+	DB.Initialize(DBType, DBOpen)
 	DB.UseTimestamps = True
 	DB.QueryAddToBatch = True
 	
@@ -261,7 +261,7 @@ Private Sub CreateDatabase
 		Log(LastException)
 	End If
 	DB.Close
-	DB.Initialize(DBOpen, DBEngine)
+	DB.Initialize(DBType, DBOpen)
 	GetCategories
 End Sub
 
