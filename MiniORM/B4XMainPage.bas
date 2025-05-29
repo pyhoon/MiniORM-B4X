@@ -237,8 +237,8 @@ Private Sub CreateDatabase
 	DB.Create
 	
 	DB.Columns = Array("category_name")
-	DB.Insert2(Array As String("Hardwares"))
-	DB.Insert2(Array As String("Toys"))
+	DB.Insert2(Array("Hardwares"))
+	DB.Insert2(Array("Toys"))
 
 	DB.Table = "tbl_products"
 	DB.Columns.Add(DB.CreateColumn2(CreateMap("Name": "category_id", "Type": DB.INTEGER)))
@@ -249,9 +249,29 @@ Private Sub CreateDatabase
 	DB.Create
 	
 	DB.Columns = Array("category_id", "product_code", "product_name", "product_price")
-	DB.Insert2(Array As String(2, "T001", "Teddy Bear", 99.9))
-	DB.Insert2(Array As String(1, "H001", "Hammer", 15.75))
-	DB.Insert2(Array As String(2, "T002", "Optimus Prime", 1000))
+	DB.Insert2(Array(2, "T001", "Teddy Bear", 99.9))
+	DB.Insert2(Array(1, "H001", "Hammer", 15.75))
+	DB.Insert2(Array(2, "T002", "Optimus Prime", 1000))
+	
+	' We can check the list of NonQueryBatch before execute the batch
+	' This info is hidden in SQL object
+	Dim i As Int
+	For Each qry As Map In DB.Batch
+		i = i + 1
+		Dim DBStatement As String= qry.Get("DBStatement")
+		Dim DBParameter() As Object = qry.Get("DBParameters")
+		Dim SB As StringBuilder
+		SB.Initialize
+		SB.Append("[")
+		Dim started As Boolean
+		For Each Param In DBParameter
+			If started Then SB.Append(", ")
+			SB.Append(Param)
+			started = True
+		Next
+		SB.Append("]")
+		Log($"Query #${i}=${DBStatement} @ ${SB.ToString}"$)
+	Next
 	
 	Wait For (DB.ExecuteBatch) Complete (Success As Boolean)
 	If Success Then
@@ -297,7 +317,7 @@ Private Sub GetProducts
 	DB.Table = "tbl_products p"
 	DB.Select = Array("p.*", "c.category_name")
 	DB.Join = DB.CreateJoin("tbl_categories c", "p.category_id = c.id", "")
-	DB.WhereParams(Array("c.id = ?"), Array As String(CategoryId))
+	DB.WhereParams(Array("c.id = ?"), Array(CategoryId))
 	DB.Query
 	Dim Items As List = DB.Results
 	For Each Item As Map In Items
@@ -434,12 +454,12 @@ Private Sub ShowDialog1 (Action As String, Item As Map)
 			End If
 			DB.Reset
 			DB.Columns = Array("category_name")
-			DB.Save2(Array As String(Item.Get("Category Name")))
+			DB.Save2(Array(Item.Get("Category Name")))
 			xui.MsgboxAsync("New category created!", $"ID: ${DB.First.Get("id")}"$)
 		Else
 			DB.Table = "tbl_categories"
 			DB.Columns = Array("category_name")
-			DB.Parameters = Array As String(Item.Get("Category Name"))
+			DB.Parameters = Array(Item.Get("Category Name"))
 			DB.Id = Item.Get("id")
 			DB.Save
 			xui.MsgboxAsync("Category updated!", "Edit")
@@ -477,12 +497,12 @@ Private Sub ShowDialog2 (Action As String, Item As Map)
 			DB.Reset
 			DB.Columns = Array("category_id", "product_code", "product_name", "product_price")
 			Dim SelectedCategory As Int = GetCategoryId(Item.Get("Category"))
-			DB.Save2(Array As String(SelectedCategory, Item.Get("Product Code"), Item.Get("Product Name"), Item.Get("Product Price")))
+			DB.Save2(Array(SelectedCategory, Item.Get("Product Code"), Item.Get("Product Name"), Item.Get("Product Price")))
 			CategoryId = SelectedCategory
 			xui.MsgboxAsync("New product created!", $"ID: ${DB.First.Get("id")}"$)
 		Else
 			DB.Table = "tbl_products"
-			DB.WhereParams(Array("product_code = ?", "id <> ?"), Array As String(Item.Get("Product Code"), Item.Get("id")))
+			DB.WhereParams(Array("product_code = ?", "id <> ?"), Array(Item.Get("Product Code"), Item.Get("id")))
 			DB.Query
 			If DB.Found Then
 				xui.MsgboxAsync("Product Code already exist", "Error")
@@ -495,7 +515,7 @@ Private Sub ShowDialog2 (Action As String, Item As Map)
 			DB.Reset
 			Dim NewCategoryId As Int = GetCategoryId(Item.Get("Category"))
 			DB.Columns = Array("category_id", "product_code", "product_name", "product_price")
-			DB.Parameters = Array As String(NewCategoryId, Item.Get("Product Code"), Item.Get("Product Name"), Item.Get("Product Price"))
+			DB.Parameters = Array(NewCategoryId, Item.Get("Product Code"), Item.Get("Product Name"), Item.Get("Product Price"))
 			DB.Id = Item.Get("id")
 			DB.Save
 			xui.MsgboxAsync("Product updated!", "Edit")

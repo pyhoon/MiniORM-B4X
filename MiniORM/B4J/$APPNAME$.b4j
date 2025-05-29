@@ -25,7 +25,7 @@ NumberOfLibraries=6
 NumberOfModules=1
 Version=10.2
 @EndOfDesignText@
-' Version 2.10
+' Version 2.11
 #Region Project Attributes 
 	#MainFormWidth: 600
 	#MainFormHeight: 600 
