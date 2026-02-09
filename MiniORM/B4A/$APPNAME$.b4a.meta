@@ -1,9 +1,12 @@
 ﻿ModuleBookmarks0=
-ModuleBookmarks1=194
+ModuleBookmarks1=
+ModuleBookmarks2=
 ModuleBreakpoints0=
 ModuleBreakpoints1=
+ModuleBreakpoints2=
 ModuleClosedNodes0=
 ModuleClosedNodes1=
-NavigationStack=B4XMainPage,ConfigureDatabase,193,0
+ModuleClosedNodes2=
+NavigationStack=B4XMainPage,ConfigureDatabase,160,3
 SelectedBuild=0
 VisibleModules=1

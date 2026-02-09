@@ -11,21 +11,22 @@ Version=9.85
 'Ctrl + click to export as zip: ide://run?File=%B4X%\Zipper.jar&Args=%PROJECT_NAME%.zip
 
 Sub Class_Globals
-	Private Root As B4XView
 	Private xui As XUI
 	Private DB As MiniORM
-	Private Conn As ORMConnector
-	Private lblTitle As B4XView
+	Private MS As ORMSettings
+	Private Root As B4XView
 	Private lblBack As B4XView
-	Private clvRecord As CustomListView
+	Private lblCode As B4XView
+	Private lblName As B4XView
+	Private lblPrice As B4XView
+	Private lblTitle As B4XView
+	Private lblStatus As B4XView
+	Private lblCategory As B4XView
+	Private btnNew As B4XView
 	Private btnEdit As B4XView
 	Private btnDelete As B4XView
-	Private btnNew As B4XView
-	Private lblName As B4XView
-	Private lblCategory As B4XView
-	Private lblCode As B4XView
-	Private lblPrice As B4XView
-	Private lblStatus As B4XView
+	'Private Image As B4XImageView
+	Private clvRecord As CustomListView
 	Private PrefDialog1 As PreferencesDialog
 	Private PrefDialog2 As PreferencesDialog
 	Private PrefDialog3 As PreferencesDialog
@@ -61,11 +62,16 @@ Private Sub B4XPage_CloseRequest As ResumableSub
 		If PrefDialog2.BackKeyPressed Then Return False
 		If PrefDialog3.BackKeyPressed Then Return False
 	End If
+	If xui.IsB4J Then
+		If PrefDialog1.Dialog.Visible Then PrefDialog1.Dialog.Close(xui.DialogResponse_Negative)
+		If PrefDialog2.Dialog.Visible Then PrefDialog2.Dialog.Close(xui.DialogResponse_Negative)
+		If PrefDialog3.Dialog.Visible Then PrefDialog3.Dialog.Close(xui.DialogResponse_Negative)
+	End If
 	If Viewing = "Product" Then
 		GetCategories
 		Return False
 	End If
-	DBClose
+	DB.Close
 	Return True
 End Sub
 
@@ -73,7 +79,7 @@ Private Sub B4XPage_Appear
 	'GetCategories
 End Sub
 
-Private Sub B4XPage_Resize(Width As Int, Height As Int)
+Private Sub B4XPage_Resize (Width As Int, Height As Int)
 	If PrefDialog1.IsInitialized And PrefDialog1.Dialog.Visible Then PrefDialog1.Dialog.Resize(Width, Height)
 	If PrefDialog2.IsInitialized And PrefDialog2.Dialog.Visible Then PrefDialog2.Dialog.Resize(Width, Height)
 	If PrefDialog3.IsInitialized And PrefDialog3.Dialog.Visible Then PrefDialog3.Dialog.Resize(Width, Height)
@@ -157,53 +163,50 @@ Private Sub btnDelete_Click
 	ShowDialog3(M1, Id)
 End Sub
 
-Private Sub DBType As String
-	Return Conn.DBType
-End Sub
-
-Private Sub DBOpen As SQL
-	Return Conn.DBOpen
-End Sub
-
-Private Sub DBClose
-	Conn.DBClose
-End Sub
-
 Public Sub ConfigureDatabase
-	Dim con As ConnectionInfo
-	con.Initialize
-	con.DBType = "SQLite"
-	con.DBFile = "MiniORM.db"
-	
-	#If B4J
-	con.DBDir = File.DirApp
+	MS.Initialize
+	#If MySQL
+		MS.DBType = "MySQL"
+		MS.JdbcUrl = "jdbc:mysql://{DbHost}:{DbPort}/{DbName}?characterEncoding=utf8&useSSL=False"
+		MS.DriverClass = "com.mysql.cj.jdbc.Driver"
+	#Else If MariaDB
+		MS.DBType = "MariaDB"
+		MS.JdbcUrl = "jdbc:mariadb://{DbHost}:{DbPort}/{DbName}"
+		MS.DriverClass = "org.mariadb.jdbc.Driver"
 	#Else
-	con.DBDir = xui.DefaultFolder 
-	#End If
-
+	MS.DBType = "SQLite"
+	MS.DBFile = "Data.db"
 	#If B4J
-	'con.DBType = "MySQL"
-	'con.DBName = "miniorm"
-	'con.DbHost = "localhost"
-	'con.User = "root"
-	'con.Password = "password"
-	'con.DriverClass = "com.mysql.cj.jdbc.Driver"
-	'con.JdbcUrl = "jdbc:mysql://{DbHost}:{DbPort}/{DbName}?characterEncoding=utf8&useSSL=False"
+	MS.DBDir = File.DirApp
+	#Else
+	MS.DBDir = xui.DefaultFolder
 	#End If
-
+	#End If
+	#If MySQL Or MariaDB
+		MS.DBName = "pakai"
+		MS.DbHost = "localhost"
+		MS.User = "root"
+		MS.Password = "password"
+	#End If
 	Try
-		Conn.Initialize(con)
-		Dim DBFound As Boolean = Conn.DBExist
-		If DBFound Then
-			LogColor($"${con.DBType} database found!"$, COLOR_BLUE)
-			DB.Initialize(DBType, DBOpen)
-			'DB.ShowExtraLogs = True
-			#If B4A or B4i
-			'DB.ShowDBUtilsJson = True
+		DB.Initialize
+		DB.Settings = MS
+		DB.ShowExtraLogs = True
+		#If MySQL Or MariaDB
+		Wait For (DB.ExistAsync) Complete (DbFound As Boolean)
+		#Else
+		Dim DbFound As Boolean = DB.Exist
+		#End If
+		If DbFound Then
+			LogColor($"${MS.DBType} database found!"$, COLOR_BLUE)
+			#If MySQL Or MariaDB
+			DB.InitPool
 			#End If
+			'File.Delete(MS.DBDir, MS.DBFile)
+			DB.Open
 			GetCategories
 		Else
-			LogColor($"${con.DBType} database not found!"$, COLOR_RED)
+			LogColor($"${MS.DBType} database not found!"$, COLOR_RED)
 			CreateDatabase
 		End If
 	Catch
@@ -218,18 +221,21 @@ End Sub
 
 Private Sub CreateDatabase
 	LogColor("Creating database...", COLOR_MAGENTA)
-	#If B4A or B4i
-	Dim Success As Boolean = Conn.DBCreate
+	DB.Initialize
+	DB.Settings = MS
+	#If MySQL Or MariaDB
+	Wait For (DB.CreateDatabaseAsync) Complete (Success As Boolean)
 	#Else
-	Wait For (Conn.DBCreate) Complete (Success As Boolean)
+	Dim Success As Boolean = DB.InitializeSQLite
 	#End If
 	If Not(Success) Then
 		Log("Database creation failed!")
 		Return
 	End If
-	
-	DB.Initialize(DBType, DBOpen)
-	DB.UseTimestamps = True
+
+	DB.Open
+	DB.ShowExtraLogs = True
+	'DB.UseTimestamps = True
 	DB.QueryAddToBatch = True
 	
 	DB.Table = "tbl_categories"
@@ -245,6 +251,8 @@ Private Sub CreateDatabase
 	DB.Columns.Add(DB.CreateColumn2(CreateMap("Name": "product_code", "Size": 12)))
 	DB.Columns.Add(DB.CreateColumn2(CreateMap("Name": "product_name")))
 	DB.Columns.Add(DB.CreateColumn2(CreateMap("Name": "product_price", "Type": DB.DECIMAL, "Size": "10,2", "Default": 0.0)))
+	'DB.BLOB = "longblob"
+	'DB.Columns.Add(DB.CreateColumn2(CreateMap("Name": "product_image", "Type": DB.BLOB)))
 	DB.Foreign("category_id", "id", "tbl_categories", "", "")
 	DB.Create
 	
@@ -252,50 +260,36 @@ Private Sub CreateDatabase
 	DB.Insert2(Array(2, "T001", "Teddy Bear", 99.9))
 	DB.Insert2(Array(1, "H001", "Hammer", 15.75))
 	DB.Insert2(Array(2, "T002", "Optimus Prime", 1000))
-	
-	' We can check the list of NonQueryBatch before execute the batch
-	' This info is hidden in SQL object
-	Dim i As Int
-	For Each qry As Map In DB.Batch
-		i = i + 1
-		Dim DBStatement As String= qry.Get("DBStatement")
-		Dim DBParameter() As Object = qry.Get("DBParameters")
-		Dim SB As StringBuilder
-		SB.Initialize
-		SB.Append("[")
-		Dim started As Boolean
-		For Each Param In DBParameter
-			If started Then SB.Append(", ")
-			SB.Append(Param)
-			started = True
-		Next
-		SB.Append("]")
-		Log($"Query #${i}=${DBStatement} @ ${SB.ToString}"$)
-	Next
-	
-	Wait For (DB.ExecuteBatch) Complete (Success As Boolean)
+
+	Wait For (DB.ExecuteBatchAsync) Complete (Success As Boolean)
 	If Success Then
 		LogColor("Database is created successfully!", COLOR_BLUE)
 	Else
 		LogColor("Database creation failed!", COLOR_RED)
-		Log(LastException)
+		Log(LastException.Message)
 	End If
-	DB.Close
-	DB.Initialize(DBType, DBOpen)
+	
+	' Adding an image to blob field
+	'Dim b() As Byte = File.ReadBytes(File.DirAssets, "icon.png")
+	'DB.Table = "tbl_products"
+	'DB.Columns = Array("product_image")
+	'DB.Parameters = Array(b)
+	'DB.Id = 3 ' after setting Columns and Parameters
+	'DB.Save
+	
 	GetCategories
 End Sub
 
 Private Sub GetCategories
 	Try
-		Dim i As Int
 		DB.Table = "tbl_categories"
 		DB.Query
 		Dim Items As List = DB.Results
 		Dim Category(Items.Size) As Category
-		For Each Item As Map In Items
+		For i = 0 To Items.Size - 1
+			Dim Item As Map = Items.Get(i)
 			Category(i).Id = Item.Get("id")
 			Category(i).Name = Item.Get("category_name")
-			i = i + 1
 		Next
 		clvRecord.Clear
 		For i = 0 To Category.Length - 1
@@ -315,22 +309,47 @@ End Sub
 Private Sub GetProducts
 	clvRecord.Clear
 	DB.Table = "tbl_products p"
-	DB.Select = Array("p.*", "c.category_name")
+	DB.ColumnsType = CreateMap("product_image": DB.BLOB)
+	'DB.Select = Array("p.*", "c.category_name")
+	DB.Columns = Array("p.id", "p.product_code", "p.product_name", "p.product_price", "p.product_image", "p.category_id", "c.category_name")
 	DB.Join = DB.CreateJoin("tbl_categories c", "p.category_id = c.id", "")
-	DB.WhereParams(Array("c.id = ?"), Array(CategoryId))
+	DB.WhereParams(Array("c.id = ?"), Array As Object(CategoryId))
 	DB.Query
 	Dim Items As List = DB.Results
+	'Log(Items.As(JSON).ToString)
 	For Each Item As Map In Items
 		clvRecord.Add(CreateProductItems(Item.Get("product_code"), GetCategoryName(Item.Get("category_id")), Item.Get("product_name"), NumberFormat2(Item.Get("product_price"), 1, 2, 2, True), clvRecord.AsView.Width), Item.Get("id"))
+		'#If Debug
+		' Test blob field
+		'If 3 = Item.Get("id") Then
+		'	Dim buffer() As Byte = Item.GetDefault("product_image", Array As Byte())
+		'	If buffer.Length > 0 Then
+		'		Dim in As InputStream
+		'		in.InitializeFromBytesArray(buffer, 0, buffer.Length)
+		'		Dim bmx As B4XBitmap
+		'		#If B4A or B4i
+		'		Dim bmp As Bitmap
+		'		bmp.Initialize2(in)
+		'		bmx = bmp
+		'	  	#Else If B4J
+		'		Dim img As Image
+		'		img.Initialize2(in)
+		'		bmx = img
+		'		#End If
+		'		in.Close
+		'		Image.Bitmap = bmx
+		'	End If
+		'Else
+		'	Image.Clear
+		'End If
+		'#End If
 	Next
-	
 	Viewing = "Product"
 	lblTitle.Text = GetCategoryName(CategoryId)
 	lblBack.Visible = True
 End Sub
 
 Private Sub GetCategoryId (Name As String) As Int
-	Dim i As Int
 	For i = 0 To Category.Length - 1
 		If Category(i).Name = Name Then
 			Return Category(i).Id
@@ -340,7 +359,6 @@ Private Sub GetCategoryId (Name As String) As Int
 End Sub
 
 Private Sub GetCategoryName (Id As Int) As String
-	Dim i As Int
 	For i = 0 To Category.Length - 1
 		If Category(i).Id = Id Then
 			Return Category(i).Name
@@ -424,7 +442,7 @@ Private Sub AdjustDialogText (Pref As PreferencesDialog)
 			btnOk.Left = btnCancel.Left - btnOk.Width
 		End If
 	Catch
-		Log(LastException)
+		Log(LastException.Message)
 	End Try
 End Sub
 
@@ -436,11 +454,11 @@ Private Sub ShowDialog1 (Action As String, Item As Map)
 	End If
 	PrefDialog1.Title = Action & " Category"
 	Dim sf As Object = PrefDialog1.ShowDialog(Item, "OK", "CANCEL")
-	#If B4A or B4i
-	PrefDialog1.Dialog.Base.Top = 100dip ' Make it lower
-	#Else
+	#If B4J
 	Sleep(0)
 	PrefDialog1.CustomListView1.sv.Height = PrefDialog1.CustomListView1.sv.ScrollViewInnerPanel.Height + 10dip
+	#Else
+	PrefDialog1.Dialog.Base.Top = 100dip ' Make it lower
 	#End If
 	Wait For (sf) Complete (Result As Int)
 	If Result = xui.DialogResponse_Positive Then
@@ -454,12 +472,12 @@ Private Sub ShowDialog1 (Action As String, Item As Map)
 			End If
 			DB.Reset
 			DB.Columns = Array("category_name")
-			DB.Save2(Array(Item.Get("Category Name")))
+			DB.Save2(Array As Object(Item.Get("Category Name")))
 			xui.MsgboxAsync("New category created!", $"ID: ${DB.First.Get("id")}"$)
 		Else
 			DB.Table = "tbl_categories"
 			DB.Columns = Array("category_name")
-			DB.Parameters = Array(Item.Get("Category Name"))
+			DB.Parameters = Array As Object(Item.Get("Category Name"))
 			DB.Id = Item.Get("id")
 			DB.Save
 			xui.MsgboxAsync("Category updated!", "Edit")
@@ -497,12 +515,12 @@ Private Sub ShowDialog2 (Action As String, Item As Map)
 			DB.Reset
 			DB.Columns = Array("category_id", "product_code", "product_name", "product_price")
 			Dim SelectedCategory As Int = GetCategoryId(Item.Get("Category"))
-			DB.Save2(Array(SelectedCategory, Item.Get("Product Code"), Item.Get("Product Name"), Item.Get("Product Price")))
+			DB.Save2(Array As Object(SelectedCategory, Item.Get("Product Code"), Item.Get("Product Name"), Item.Get("Product Price")))
 			CategoryId = SelectedCategory
 			xui.MsgboxAsync("New product created!", $"ID: ${DB.First.Get("id")}"$)
 		Else
 			DB.Table = "tbl_products"
-			DB.WhereParams(Array("product_code = ?", "id <> ?"), Array(Item.Get("Product Code"), Item.Get("id")))
+			DB.WhereParams(Array("product_code = ?", "id <> ?"), Array As Object(Item.Get("Product Code"), Item.Get("id")))
 			DB.Query
 			If DB.Found Then
 				xui.MsgboxAsync("Product Code already exist", "Error")
@@ -515,7 +533,7 @@ Private Sub ShowDialog2 (Action As String, Item As Map)
 			DB.Reset
 			Dim NewCategoryId As Int = GetCategoryId(Item.Get("Category"))
 			DB.Columns = Array("category_id", "product_code", "product_name", "product_price")
-			DB.Parameters = Array(NewCategoryId, Item.Get("Product Code"), Item.Get("Product Name"), Item.Get("Product Price"))
+			DB.Parameters = Array As Object(NewCategoryId, Item.Get("Product Code"), Item.Get("Product Name"), Item.Get("Product Price"))
 			DB.Id = Item.Get("id")
 			DB.Save
 			xui.MsgboxAsync("Product updated!", "Edit")
@@ -530,11 +548,11 @@ End Sub
 Private Sub ShowDialog3 (Item As Map, Id As Int)
 	PrefDialog3.Title = "Delete " & Viewing
 	Dim sf As Object = PrefDialog3.ShowDialog(Item, "OK", "CANCEL")
-	#If B4A or B4i
-	PrefDialog3.Dialog.Base.Top = 100dip ' Make it lower
-	#Else
+	#If B4J
 	Sleep(0)
 	PrefDialog3.CustomListView1.sv.Height = PrefDialog3.CustomListView1.sv.ScrollViewInnerPanel.Height + 10dip
+	#Else
+	PrefDialog3.Dialog.Base.Top = 100dip ' Make it lower
 	#End If
 	PrefDialog3.CustomListView1.GetPanel(0).GetView(0).Text = Item.Get("Item")
 	#If B4i

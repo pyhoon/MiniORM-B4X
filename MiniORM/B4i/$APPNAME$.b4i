@@ -14,7 +14,7 @@ Library1=b4xpages
 Library2=b4xpreferencesdialog
 Library3=icore
 Library4=xui views
-Library5=miniormutils
+Library5=miniormutils.v4
 Module1=|relative|..\B4XMainPage
 NumberOfFiles=5
 NumberOfLibraries=5
@@ -24,7 +24,7 @@ Version=8.8
 'Code module
 #Region  Project Attributes 
 	#ApplicationLabel: MiniORM
-	#Version: 2.11
+	#Version: 4.00
 	'Orientation possible values: Portrait, LandscapeLeft, LandscapeRight and PortraitUpsideDown
 	#iPhoneOrientations: Portrait, LandscapeLeft, LandscapeRight
 	#iPadOrientations: Portrait, LandscapeLeft, LandscapeRight, PortraitUpsideDown
@@ -43,7 +43,6 @@ Version=8.8
 Sub Process_Globals
 	Public App As Application
 	Public NavControl As NavigationController
-
 End Sub
 
 Private Sub Application_Start (Nav As NavigationController)
