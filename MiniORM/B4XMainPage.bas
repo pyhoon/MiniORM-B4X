@@ -249,7 +249,8 @@ Private Sub CreateDatabase
 	DB.Columns.Add(DB.CreateColumn2(CreateMap("Name": "product_price", "Type": DB.DECIMAL, "Size": "10,2", "Default": 0.0)))
 	'DB.BLOB = "longblob"
 	'DB.Columns.Add(DB.CreateColumn2(CreateMap("Name": "product_image", "Type": DB.BLOB)))
-	DB.Foreign("category_id", "id", "tbl_categories", "", "")
+	DB.Foreign = "category_id"
+	DB.References("tbl_categories", "id")
 	DB.Create
 	
 	DB.Columns = Array("category_id", "product_code", "product_name", "product_price")
@@ -305,40 +306,13 @@ End Sub
 Private Sub GetProducts
 	clvRecord.Clear
 	DB.Table = "tbl_products p"
-	'DB.ColumnsType = CreateMap("product_image": DB.BLOB)
-	'DB.Columns = Array("p.id", "p.product_code", "p.product_name", "p.product_price", "p.product_image", "p.category_id", "c.category_name")
 	DB.Columns = Array("p.id", "p.product_code", "p.product_name", "p.product_price", "p.category_id", "c.category_name")
-	DB.Join = DB.CreateJoin("tbl_categories c", "p.category_id = c.id", "")
+	DB.Join("tbl_categories c", "p.category_id = c.id", "")
 	DB.WhereParams(Array("c.id = ?"), Array As Object(CategoryId))
 	DB.Query
 	Dim Items As List = DB.Results
-	'Log(Items.As(JSON).ToString)
 	For Each Item As Map In Items
 		clvRecord.Add(CreateProductItems(Item.Get("product_code"), GetCategoryName(Item.Get("category_id")), Item.Get("product_name"), NumberFormat2(Item.Get("product_price"), 1, 2, 2, True), clvRecord.AsView.Width), Item.Get("id"))
-		'#If Debug
-		' Test blob field
-		'If 3 = Item.Get("id") Then
-		'	Dim buffer() As Byte = Item.GetDefault("product_image", Array As Byte())
-		'	If buffer.Length > 0 Then
-		'		Dim in As InputStream
-		'		in.InitializeFromBytesArray(buffer, 0, buffer.Length)
-		'		Dim bmx As B4XBitmap
-		'		#If B4A or B4i
-		'		Dim bmp As Bitmap
-		'		bmp.Initialize2(in)
-		'		bmx = bmp
-		'	  	#Else If B4J
-		'		Dim img As Image
-		'		img.Initialize2(in)
-		'		bmx = img
-		'		#End If
-		'		in.Close
-		'		Image.Bitmap = bmx
-		'	End If
-		'Else
-		'	Image.Clear
-		'End If
-		'#End If
 	Next
 	Viewing = "Product"
 	lblTitle.Text = GetCategoryName(CategoryId)
