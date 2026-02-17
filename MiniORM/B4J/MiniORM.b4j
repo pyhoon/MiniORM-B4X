@@ -39,7 +39,7 @@ Version=10.3
 'For source
 #Macro: Title, Create Template, ide://run?file=%JAVABIN%\jar.exe&WorkingDirectory=..&args=-cMf&args=%PROJECT%\..\..\release\MiniORM+(4.10).b4xtemplate&args=..\B4A\Files&args=..\B4A\$APPNAME$.*&args=..\B4A\Starter.bas&args=..\B4A\libs.json&args=..\B4A\Objects\res\drawable\icon.png&args=..\B4i\$APPNAME$.*&args=..\B4i\libs.json&args=..\B4i\Files\*.bil&args=..\B4i\Files\*.json&args=..\B4J\Files&args=..\B4J\$APPNAME$.*&args=..\B4J\libs.json&args=..\B4XMainPage.bas
 #Macro: Title, Release folder, ide://run?file=%WINDIR%\SysWOW64\explorer.exe&args=%PROJECT%\..\..\release
-#Macro: Title, Copy to AddLibs, ide://run?file=%COMSPEC%&args=/c&args=copy&args=%PROJECT%\..\..\release\*.b4xtemplate&args=%ADDITIONAL%
+#Macro: Title, Copy to AddLibs, ide://run?file=%COMSPEC%&args=/c&args=copy&args=%PROJECT%\..\..\release\*.b4xtemplate&args=%ADDITIONAL%\..\B4X
 'For release
 '#Macro: Title, GetLibraries, ide://run?file=%JAVABIN%\java.exe&args=-jar&args=%ADDITIONAL%\..\B4X\libget.jar&args=%PROJECT%&args=false
 '#Macro: Title, Backup, ide://run?file=%JAVABIN%\jar.exe&WorkingDirectory=..&Args=-cMf&Args=..\%PROJECT_NAME%.zip&args=Files&args=*.b4*&args=*.b4*.meta
