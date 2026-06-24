@@ -1,0 +1,11 @@
+{
+    "Version": "6.00",
+    "Libraries": [
+        {
+            "Name": "MiniORMUtils.b4xlib",
+            "Platform": "B4X",
+            "Version": 6.00,
+            "Link": "https://github.com/pyhoon/MiniORMUtils-B4X/releases/download/v6.00/MiniORMUtils.b4xlib"
+        }      
+    ]
+}

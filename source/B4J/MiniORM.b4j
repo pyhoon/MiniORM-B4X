@@ -1,0 +1,92 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.miniorm
+File1=category.json
+File2=CategoryItem.bjl
+File3=icon.png
+File4=MainPage.bjl
+File5=product.json
+File6=ProductItem.bjl
+FileGroup1=Templates
+FileGroup2=Layouts
+FileGroup3=Default Group
+FileGroup4=Layouts
+FileGroup5=Templates
+FileGroup6=Layouts
+Group=Default Group
+Library1=b4xpages
+Library2=b4xpreferencesdialog
+Library3=jcore
+Library4=jfx
+Library5=xui views
+Library6=miniormutils
+Module1=|relative|..\B4XMainPage
+NumberOfFiles=6
+NumberOfLibraries=6
+NumberOfModules=1
+Version=10.5
+@EndOfDesignText@
+'Code Module
+'Template:  MiniORM
+'Version:   6.00
+'License:   MIT License
+'Developer: Poon Yip Hoon (Aeric)
+'
+'Product: AppName
+'Version: 1.00
+#Region Project Attributes 
+	#MainFormWidth: 600
+	#MainFormHeight: 600 
+#End Region
+#If MariaDB
+	#AdditionalJar: mariadb-java-client-3.5.6
+#Else If MySQL
+	#AdditionalJar: mysql-connector-j-9.3.0
+#Else
+	#AdditionalJar: sqlite-jdbc-3.7.2
+#End If
+#Region Macros
+	'For source
+	#Macro: Title, Create .b4a, ide://run?File=%COMSPEC%&Args=/c&Args=copy&Args=%PROJECT%\..\B4A\MiniORM.b4a&Args=%PROJECT%\..\B4A\$APPNAME$.b4a
+	#Macro: Title, Create .b4i, ide://run?File=%COMSPEC%&Args=/c&Args=copy&Args=%PROJECT%\..\B4i\MiniORM.b4i&Args=%PROJECT%\..\B4i\$APPNAME$.b4i
+	#Macro: Title, Create .b4j, ide://run?File=%COMSPEC%&Args=/c&Args=copy&Args=%PROJECT%\MiniORM.b4j&Args=%PROJECT%\$APPNAME$.b4j	
+	'Remove #Region Macros in .b4j
+	#Macro: Title, Open .b4j, ide://run?File=%WINDIR%\explorer.exe&Args=%PROJECT%\$APPNAME$.b4j
+	#Macro: Title, Create Template, ide://run?File=%JAVABIN%\jar.exe&WorkingDirectory=..&Args=-cMf&Args=%PROJECT%\..\..\release\MiniORM+(6.00).b4xtemplate&Args=..\B4J\$APPNAME$.*&Args=..\B4J\.git*&Args=..\B4J\libs.json&Args=..\B4J\Files\*.bjl&Args=..\B4A\$APPNAME$.*&Args=..\B4A\.git*&Args=..\B4A\libs.json&Args=..\B4A\Files\*.bal&Args=..\B4i\$APPNAME$.*&Args=..\B4i\.git*&Args=..\B4i\libs.json&Args=..\B4i\Files\*.bil&Args=..\Shared+Files&Args=..\B4XMainPage.bas
+	'&Args=..\B4A\Objects\res\drawable\icon.png
+	#Macro: Title, Copy to AddLibs, ide://run?File=%COMSPEC%&Args=/c&Args=copy&Args=%PROJECT%\..\..\release\*.b4xtemplate&Args=%ADDITIONAL%\..\B4X
+	#Macro: Title, Release folder, ide://run?File=%WINDIR%\SysWOW64\explorer.exe&Args=%PROJECT%\..\..\release
+#End Region
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.Show
+	Dim PagesManager As B4XPagesManager
+	PagesManager.Initialize(MainForm)
+End Sub
+
+'Template version: B4J-1.0
+#Region Delegates
+Sub MainForm_FocusChanged (HasFocus As Boolean)
+	B4XPages.Delegate.MainForm_FocusChanged(HasFocus)
+End Sub
+
+Sub MainForm_Resize (Width As Double, Height As Double)
+	B4XPages.Delegate.MainForm_Resize(Width, Height)
+End Sub
+
+Sub MainForm_Closed
+	B4XPages.Delegate.MainForm_Closed
+End Sub
+
+Sub MainForm_CloseRequest (EventData As Event)
+	B4XPages.Delegate.MainForm_CloseRequest(EventData)
+End Sub
+
+Public Sub MainForm_IconifiedChanged (Iconified As Boolean)
+	B4XPages.Delegate.MainForm_IconifiedChanged(Iconified)
+End Sub
+#End Region
