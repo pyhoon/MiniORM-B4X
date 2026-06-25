@@ -80,9 +80,10 @@ This template uses the following B4X libraries:
 ## Installation
 
 1. Download the latest `MiniORM (6.00).b4xtemplate` from [Releases](https://github.com/pyhoon/MiniORM-B4X/releases)
-2. In the B4X IDE, go to **Tools → Import Template**
-3. Select the downloaded `.b4xtemplate` file
-4. Open the imported project and configure `ConfigureDatabase` in `B4XMainPage.bas`
+2. Put the downloaded `.b4xtemplate` file inside B4X Additional Libraries folder configured in the IDE.
+3. In the B4X IDE, go to **File → New** and select `MiniORM (6.00)` from the list.
+4. Provide your `Project Folder` and `Project Name` then click button OK.
+5. Configure `ConfigureDatabase` in `B4XMainPage.bas`
 
 ---
 
