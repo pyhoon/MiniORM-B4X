@@ -229,7 +229,7 @@ Copyright (c) 2026 Poon Yip Hoon (Aeric)
 **Poon Yip Hoon (Aeric)**
 
 - GitHub: [@pyhoon](https://github.com/pyhoon)
-- B4X Community: [pyhoon](https://www.b4x.com/android/forum/threads/152291/)
+- B4X Community: [aeric](https://www.b4x.com/android/forum/members/aeric.74499/)
 
 ---
 
