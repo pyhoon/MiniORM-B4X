@@ -28,7 +28,7 @@ Version=13.5
 'Activity module
 'Template:  MiniORM
 'Version:   6.00
-'License:   MIT License
+'License:   CC0 1.0 Universal
 'Developer: Poon Yip Hoon (Aeric)
 #Region  Project Attributes 
 	#ApplicationLabel: AppName
