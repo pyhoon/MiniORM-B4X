@@ -239,9 +239,9 @@ For the **complete API reference**, see the [MiniORMUtils-B4X repository](https:
 
 ## License
 
-This template project is available under the **MIT License**.
+This project template is available under the **Creative Commons**.
 
-The underlying [MiniORMUtils](https://github.com/pyhoon/MiniORMUtils-B4X) library is also MIT-licensed.
+The underlying [MiniORMUtils](https://github.com/pyhoon/MiniORMUtils-B4X) library is under MIT-licensed.
 
 Copyright (c) 2026 Poon Yip Hoon (Aeric)
 
