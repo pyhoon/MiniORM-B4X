@@ -54,6 +54,29 @@ A cross-platform **B4X** demo / template project showcasing the **MiniORMUtils**
 
 ---
 
+## Library Dependencies
+
+This template uses the following B4X libraries:
+
+| Library | B4A | B4i | B4J | Purpose |
+|---------|:---:|:---:|:---:|---------|
+| **MiniORMUtils** v6.00 | ✓ | ✓ | ✓ | ORM engine (core dependency) |
+| **B4XPages** | ✓ | ✓ | ✓ | Cross-platform page navigation framework |
+| **XUI Views** | ✓ | ✓ | ✓ | Cross-platform UI controls (B4XView, B4XImageView, etc.) |
+| **B4XPreferencesDialog** | ✓ | ✓ | ✓ | Form/dialog generation from JSON templates |
+| **CustomListView** | ✓ | ✓ | ✓ | Virtualized scrollable list control |
+| **jServer** (B4J) | ✗ | ✗ | ✓ | JDBC connection pool for MySQL/MariaDB |
+| **JavaObject** (B4J) | ✗ | ✗ | ✓ | Java reflection for JDBC driver access |
+
+> **Note**: `jServer` and `JavaObject` are B4J-only and only required when using MySQL or MariaDB backends. All other libraries ship with the B4X IDE.
+
+### Download Links
+
+- **MiniORMUtils**: [https://github.com/pyhoon/MiniORMUtils-B4X/releases](https://github.com/pyhoon/MiniORMUtils-B4X/releases)
+- All other libraries ship with the B4X IDE — no separate download needed.
+
+---
+
 ## Installation
 
 1. Download the latest `MiniORM (6.00).b4xtemplate` from [Releases](https://github.com/pyhoon/MiniORM-B4X/releases)
